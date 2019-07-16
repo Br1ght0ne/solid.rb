@@ -19,58 +19,42 @@ export default ({ children }) => <MainLayout meta={meta}>{children}</MainLayout>
 
 В примере ниже до рефакторинга мы имеем класс `Person`, который содержит логику преобразования телефонного номера. После — эта функциональность вынесена в класс `PhoneNumber`.
 
-```ts
-// до рефакторинга
-class Person {
-  name: string;
-  phone: string;
-  officeCode: string;
+```ruby
+# до рефакторинга
+class Person
+  def initialize(name, phone, office_code)
+    @name = name
+    @phone = phone
+    @office_code = office_code
+  end
 
-  constructor(name: string, phone: string, officeCode: string) {
-    this.name = name;
-    this.phone = phone;
-    this.officeCode = officeCode;
-  }
+  def phone_number
+    "#{@phone} доб. #{office_code}"
+  end
+end
 
-  phoneNumberOf = (): string => {
-    return `${this.phone} доб. ${this.officeCode}`
-  }
-}
+# после
+class PhoneNumber
+  def initialize(phone, office_code)
+    @phone = phone
+    @office_code = office_code
+  end
 
-// после
-interface PhoneNumber {
-  phone: string;
-  officeCode: string;
-  valueOf(): string
-}
+  def to_s
+    "#{@phone} доб. #{@office_code}"
+  end
+end
 
-class PhoneNumber implements PhoneNumber {
-  phone: string;
-  officeCode: string;
+class Person
+  def initialize(name, phone_number)
+    @name = name
+    @phone_number = phone_number
+  end
 
-  constructor(phone: string, officeCode: string) {
-    this.phone = phone;
-    this.officeCode = officeCode;
-  }
-
-  valueOf = (): string => {
-    return `${this.phone} доб. ${this.officeCode}`
-  }
-}
-
-class Person {
-  name: string;
-  phoneNumber: PhoneNumber;
-
-  constructor(name: string, phoneNumber: PhoneNumber) {
-    this.name = name;
-    this.phoneNumber = phoneNumber
-  }
-
-  phoneNumberOf = (): string => {
-    return this.phoneNumber.valueOf()
-  }
-}
+  def phone_number
+    @phone_number.to_s
+  end
+end
 ```
 
 Класс `Person` теперь работает только с данными пользователя, а задача преобразования номера делегируется экземпляру класса `PhoneNumber` через зависимость в конструкторе.
@@ -89,49 +73,41 @@ class Person {
 
 В примере ниже мы выносим инициализацию и настройки классов `Square` и `Circle` в фасад `ShapeFacade`. После этого мы можем вызывать метод `.areaOf` фасада и получать площадь любой фигуры, которая подготовлена внутри фасада.
 
-```ts
-class Square extends Figure {
-  length: number
+```ruby
+class Square
+  def initialize(length)
+    @length = length
+  end
 
-  constructor(length: number) {
-    this.length = length
-  }
+  def area
+    @length ** 2
+  end
+end
 
-  areaOf(): number {
-    return this.length ** 2
-  }
-}
+class Circle
+  def initialize(radius)
+    @radius = radius
+  end
 
-class Circle extends Figure {
-  radius: number
+  def area
+    Math::PI * (@radius ** 2)
+  end
+end
 
-  constructor(radius: number) {
-    this.radius = radius
-  }
+# применение фасада
+class ShapeFacade
+  def initialize(square, circle)
+    @square = Square.new(42)
+    @circle = Cicle.new(42)
+  end
 
-  areaOf(): number {
-    return Math.PI * (this.radius ** 2)
-  }
-}
-
-// применение фасада
-class ShapeFacade {
-  square: Square
-  circle: Circle
-
-  constructor() {
-    this.square = new Square(42)
-    this.circle = new Circle(42)
-  }
-
-  areaOf(figure: string): number {
-    switch (figure) {
-      case 'square': return this.square.areaOf()
-      case 'circle': return this.circle.areaOf()
-      default: return 0
-    }
-  }
-}
+  def area_of(figure)
+    case figure
+    when 'square' then @square.area
+    when 'circle' then @circle.area
+    else 0
+    end
+  end
 ```
 
 ## Вопросы
@@ -144,32 +120,28 @@ class ShapeFacade {
 
 В примере мы используем прокси `LoggedRequest`, чтобы не примешивать логирование в класс, который реализует запросы к серверу `RequestClient`.
 
-```ts
-class RequestClient {
-  async request(url: string): Promise<any> {
-    try {
-      const response = await fetch(url)
-      const data = await response.json()
-      return data
-    }
-    catch (e) {
-      return null
-    }
-  }
-}
+```ruby
+require 'httparty'
 
-class LoggedRequest {
-  loggee: RequestClient
+class RequestClient
+  def request(url)
+    response = HTTParty.get(url)
+    response.body
+  rescue => e
+    nil
+  end
+end
 
-  constructor(loggee: RequestClient) {
-    this.loggee = loggee
-  }
+class LoggedRequest
+  def initialize(loggee)
+    @loggee = loggee
+  end
 
-  async request(url: string): Promise<any> {
-    console.log(`Performed request to ${url}`)
-    return await this.loggee.request(url)
-  }
-}
+  def request(url)
+    warn "Performed request to #{url}"
+    @loggee.request(url)
+  end
+end
 ```
 
 ## Вопросы
@@ -181,10 +153,8 @@ class LoggedRequest {
 - [Пример использования выделения класса](https://refactoring.guru/ru/extract-class)
 - [Фасад](https://github.com/kamranahmedse/design-patterns-for-humans/blob/master/README.md#-facade)
 - [Пример использования фасада](https://refactoring.guru/ru/design-patterns/facade)
-- [Реализация фасада на TypeScript](https://github.com/torokmark/design_patterns_in_typescript/blob/master/facade/facade.ts)
 - [Божественный объект](https://ru.wikipedia.org/wiki/Божественный_объект )
 - [Прокси](https://github.com/kamranahmedse/design-patterns-for-humans/blob/master/README.md#-proxy)
 - [Пример использования прокси](https://refactoring.guru/ru/design-patterns/proxy)
-- [Реализация прокси на TypeScript](https://github.com/torokmark/design_patterns_in_typescript/blob/master/proxy/proxy.ts)
 
 *[API]:Application programming interface

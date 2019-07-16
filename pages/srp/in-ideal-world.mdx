@@ -18,61 +18,40 @@ export default ({ children }) => <MainLayout meta={meta}>{children}</MainLayout>
 
 Мы создадим класс `ReportExporter`, который будет заниматься только экспортом данных. Определять необходимый формат будет класс `FormatSelector`. А форматированием данных будут заниматься классы: `HtmlFormatter` и `TxtFormatter`.
 
-```ts
-// тип данных для отчёта
-type ReportData = {
-  content: string,
-  date: Date,
-  size: number,
-}
-
-// возможные форматы
-enum ReportTypes {
-  Html,
-  Txt,
-}
-
-// класс, который занимается экспортом данных
+```ruby
+# класс, который занимается экспортом данных
 class ReportExporter {
-  name: string
-  data: ReportData
+  def initialize(name, report_data)
+    @name = name
+    @report_data = report_data
+  end
 
-  constructor(name: string, data: ReportData) {
-    this.name = name
-    this.data = data
-  }
-
-  export(reportType: ReportTypes): string {
-    const formatter: Formatter = new FormatSelector(reportType, this.data)
-    return formatter.format()
-  }
-}
+  def export(report_type)
+    formatter = FormatSelector.new(report_type, @report_data)
+  end
+end
 ```
 
 ## Форматы экспорта
 
 В соответствии с SRP форматирование данных — это _отдельная задача_. Поэтому для преобразования данных отчёта в необходимый формат мы создадим отдельные классы.
 
-```ts
-interface Formatter {
-  format(data: ReportData): string;
-}
+```ruby
+# класс для форматирования в HTML
+class HtmlFormatter
+  def format(report_data)
+    # форматируем данные в HTML и возвращаем:
+    'html string'
+  end
+end
 
-// класс для форматирования в HTML
-class HtmlFormatter implements Formatter {
-  format(data: ReportData): string {
-    // форматируем данные в HTML и возвращаем:
-    return 'html string'
-  }
-}
-
-// класс для форматирования в TXT
-class TxtFormatter implements Formatter {
-  format(data: ReportData): string {
-    // форматируем данные в TXT и возвращаем:
-    return 'txt string'
-  }
-}
+# класс для форматирования в TXT
+class TxtFormatter
+  def format(report_data)
+    # форматируем данные в TXT и возвращаем:
+    'txt string'
+  end
+end
 ```
 
 ## Выбор формата
@@ -81,21 +60,21 @@ class TxtFormatter implements Formatter {
 
 Создадим новый класс `FormatSelector`, который будет выбирать тип форматирования, в зависимости от настроек.
 
-```ts
-class FormatSelector {
-  formatters = {
-    [ReportTypes.Html]: HtmlFormatter,
-    [ReportTypes.Txt]: TxtFormatter,
+```ruby
+class FormatSelector
+  FORMATTERS = {
+    html: HtmlFormatter,
+    txt: TxtFormatter
   }
 
-  constructor(reportType: ReportTypes) {
-    const FormatterFactory = this.formatters[reportType]
-    return new FormatterFactory()
-  }
-}
+  def initialize(report_type)
+    formatter = FORMATTERS[report_type]
+    formatter.new
+  end
+end
 
-const dynamicFormatter = new FormatSelector(ReportTypes.Html)
-dynamicFormatter.format(/*...*/)
+dynamic_formatter = FormatSelector.new(:html)
+# dynamic_formatter.format(...)
 ```
 
 Таким образом SRP помогает разделить ответственность за различные задачи между сущностями и сделать это так, чтобы каждая сущность занималась одной задачей.
